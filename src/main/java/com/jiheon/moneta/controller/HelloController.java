@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jiheon.moneta.dto.UserRequest;
+import com.jiheon.service.UserService;
+
+
 
 // 해당 클래스는 REST API를 처리하는 컨트롤러임을 나타냄
 @RestController 
@@ -49,8 +52,24 @@ public class HelloController {
     */
 
     // Using DTO
+    //@PostMapping("/user")
+    //public String createUser(@RequestBody UserRequest userRequest){
+    //    return "name = "+userRequest.getName()+", age = "+userRequest.getAge();
+    //}
+
+    // Service에 DTO 넘기기
+    // @Service 안했을때 -> new 로 객체 생성
+    //private UserService userService=new UserService();
+
+    // Spring이 가지고 있는 UserService 객체를 나한테 넣어달라 요청 -> DI
+    // DI = 의존성 주입
+    private final UserService userService;
+
+    public HelloController(UserService userService) {
+        this.userService = userService;
+    }
     @PostMapping("/user")
     public String createUser(@RequestBody UserRequest userRequest){
-        return "name = "+userRequest.getName()+", age = "+userRequest.getAge();
+        return userService.createUser(userRequest.getName(), userRequest.getAge());
     }
 }
