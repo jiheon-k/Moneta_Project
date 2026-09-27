@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jiheon.moneta.dto.UserRequest;
-import com.jiheon.service.UserService;
+import com.jiheon.moneta.service.UserService;
 
 
 
