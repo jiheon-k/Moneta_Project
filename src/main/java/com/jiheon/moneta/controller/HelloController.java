@@ -68,8 +68,16 @@ public class HelloController {
     public HelloController(UserService userService) {
         this.userService = userService;
     }
+
     @PostMapping("/user")
     public String createUser(@RequestBody UserRequest userRequest){
-        return userService.createUser(userRequest.getName(), userRequest.getAge());
+        //return userService.createUser(userRequest.getName(), userRequest.getAge());
+        userService.createUser(userRequest.getName(), userRequest.getAge());
+        return "User Created";
     }
+
+    /*
+        HTTP에서 post 요청 -> DTO를 받아서 Service 호출 -> Service에서 createUser 호출
+        -> createUser에서 User Entity 객체 생성 후 정보 입력 -> Repository 호출하여 실제 DB에 저장
+    */ 
 }
