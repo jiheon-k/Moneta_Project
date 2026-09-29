@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jiheon.moneta.dto.UserRequest;
+import com.jiheon.moneta.dto.UserResponse;
 import com.jiheon.moneta.service.UserService;
-
 
 
 // 해당 클래스는 REST API를 처리하는 컨트롤러임을 나타냄
@@ -75,6 +75,12 @@ public class HelloController {
         userService.createUser(userRequest.getName(), userRequest.getAge());
         return "User Created";
     }
+
+    @GetMapping("/user/{id}")
+    public UserResponse getUser(@PathVariable Long id){
+        return userService.getUser(id);
+    }
+    
 
     /*
         HTTP에서 post 요청 -> DTO를 받아서 Service 호출 -> Service에서 createUser 호출
