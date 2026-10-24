@@ -1,5 +1,8 @@
-package com.jiheon.moneta.entity;
+package com.jiheon.moneta.transaction;
 
+import com.jiheon.moneta.user.User;
+import com.jiheon.moneta.account.Account;
+import com.jiheon.moneta.category.Category;
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
@@ -18,11 +21,14 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne 
+    @JoinColumn(name="user_id", nullable=false)
+    private User user;
+
     @Column(nullable = false)
     private Long amount;
 
     private String memo;
-
     @Column(nullable = false)
     private LocalDate transactionDate;
 
@@ -38,10 +44,12 @@ public class Transaction {
 
     // 해당 거래에서 사용된 AccountType
     // JoinColum -> 참조할 칼럼 지정 X -> PK 참조
+    // 돈이 나가는 계좌
     @ManyToOne
     @JoinColumn(name = "from_account_id")
     private Account fromAccount;
 
+    // 돈이 들어오는 계좌
     @ManyToOne
     @JoinColumn(name = "to_account_id")
     private Account toAccount;
@@ -50,6 +58,10 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    public User getUser(){
+        return user;
+    }
 
     public Long getId() {
         return id;

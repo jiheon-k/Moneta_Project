@@ -1,6 +1,6 @@
-package com.jiheon.moneta.dto.account;
+package com.jiheon.moneta.account.dto;
 
-import com.jiheon.moneta.entity.Account.AccountType;
+import com.jiheon.moneta.account.Account.AccountType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

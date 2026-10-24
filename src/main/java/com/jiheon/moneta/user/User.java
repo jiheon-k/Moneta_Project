@@ -1,4 +1,4 @@
-package com.jiheon.moneta.entity;
+package com.jiheon.moneta.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +11,8 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 @Entity
 public class User {
+    // NULL 표현을 위해 Long, Integer와 같은 객체 사용
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;        // PK, 인조 key

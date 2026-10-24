@@ -1,11 +1,7 @@
-package com.jiheon.moneta.service.user;
+package com.jiheon.moneta.user;
 
 import org.springframework.stereotype.Service;
 
-import com.jiheon.moneta.dto.user.UserRequest;
-import com.jiheon.moneta.dto.user.UserResponse;
-import com.jiheon.moneta.entity.User;
-import com.jiheon.moneta.repository.UserRepository;
 
 @Service 
 public class UserService {

@@ -1,4 +1,4 @@
-package com.jiheon.moneta.dto.user;
+package com.jiheon.moneta.user;
 
 import jakarta.validation.constraints.*;
 

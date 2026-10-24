@@ -1,5 +1,6 @@
-package com.jiheon.moneta.entity;
+package com.jiheon.moneta.category;
 
+import com.jiheon.moneta.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

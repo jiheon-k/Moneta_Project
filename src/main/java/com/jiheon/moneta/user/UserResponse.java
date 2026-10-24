@@ -1,4 +1,4 @@
-package com.jiheon.moneta.dto.user;
+package com.jiheon.moneta.user;
 
 // 서버가 만들어 보내는 결과 값
 public class UserResponse {

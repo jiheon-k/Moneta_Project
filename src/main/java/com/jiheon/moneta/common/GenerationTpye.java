@@ -1,4 +1,4 @@
-package com.jiheon.moneta.entity;
+package com.jiheon.moneta.common;
 
 /**
  * GenerationTpye
