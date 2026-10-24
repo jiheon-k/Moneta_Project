@@ -30,8 +30,8 @@
 erDiagram
     User ||--o{ Account : owns
     User |o--o{ Category : creates
-    Account |o--o{ Transaction : fromAccount
-    Account |o--o{ Transaction : toAccount
+    Account ||--o{ Transaction : account
+    Account |o--o{ Transaction : transferAccount
     Category |o--o{ Transaction : classifies
 
     User {
@@ -58,8 +58,8 @@ erDiagram
         String memo
         LocalDate transactionDate
         TransactionType type
-        Long from_account_id FK
-        Long to_account_id FK
+        Long account_id FK
+        Long transfer_account_id FK
         Long category_id FK
     }
 ```
@@ -97,8 +97,9 @@ AccountType은 코드의 표기를 따라 `LIVING`, `SAVING`, `INVESTMENT`를 �
 
 ```text
 현재 잔액 = initialBalance
-          + 해당 Account가 toAccount인 거래 금액 합계
-          - 해당 Account가 fromAccount인 거래 금액 합계
+          + account가 해당 계좌인 INCOME 금액 합계
+          - account가 해당 계좌인 EXPENSE·TRANSFER 금액 합계
+          + transferAccount가 해당 계좌인 TRANSFER 금액 합계
 ```
 
 현재 잔액을 저장하는 별도 필드는 없다. 투자 묶음의 잔액은 기록된 자금 이동 기준이며 현재 시장 평가액을 뜻하지 않는다.
@@ -127,11 +128,11 @@ AccountType은 코드의 표기를 따라 `LIVING`, `SAVING`, `INVESTMENT`를 �
 | memo | String | VARCHAR | 허용 | 길이 직접 지정 없음 | 메모 |
 | transactionDate | LocalDate | DATE | 불가 | 실제 거래 날짜 | 기간별 집계 기준 |
 | type | TransactionType | 문자열 기반 enum | 불가 | EnumType.STRING | INCOME / EXPENSE / TRANSFER |
-| fromAccount | Account | BIGINT | 허용 | from_account_id FK → Account.id | 돈이 나가는 곳 |
-| toAccount | Account | BIGINT | 허용 | to_account_id FK → Account.id | 돈이 들어오는 곳 |
+| account | Account | BIGINT | 불가 | account_id FK → Account.id | 수입·지출의 거래 계좌, 이체의 출금 계좌 |
+| transferAccount | Account | BIGINT | 허용 | transfer_account_id FK → Account.id | 이체받는 계좌. 수입·지출에서는 비움 |
 | category | Category | BIGINT | 허용 | category_id FK → Category.id | 거래 분류 |
 
-제공된 코드의 `fromAccout` 및 관련 메서드는 `fromAccount`로 수정하도록 안내한 상태이다. 문서에는 의도한 이름을 사용했다. category getter/setter 추가와 setId 제거도 안내했으며, 수정 후 전체 코드는 아직 확인하지 않았다.
+거래 계좌 구조는 2026-10-24에 `account`·`transferAccount`로 변경했다. 기존 DB 이전 방법은 [거래 계좌 이전 안내](docs/db/transaction-account-migration.md)를 참고한다. 나머지 항목은 초기 설계 기록이므로 실제 코드를 우선한다.
 
 ## 5. 관계 및 거래 규칙
 
@@ -139,15 +140,15 @@ AccountType은 코드의 표기를 따라 `LIVING`, `SAVING`, `INVESTMENT`를 �
 |---|---|
 | User → Account | 회원 하나에 Account 0개 이상. 각 Account는 회원 1명 필수 |
 | User → Category | 회원 하나에 개인 Category 0개 이상. Category의 소유자는 0명 또는 1명 |
-| Account → Transaction (출발) | Account 하나에서 여러 거래 발생. 거래마다 출발 Account는 0개 또는 1개 |
-| Account → Transaction (도착) | Account 하나로 여러 거래 유입. 거래마다 도착 Account는 0개 또는 1개 |
+| Account → Transaction (거래 계좌) | 거래마다 account 1개 필수. 이체에서는 출금 계좌 |
+| Account → Transaction (이체 도착) | 이체마다 transferAccount 1개 필수. 수입·지출에서는 없음 |
 | Category → Transaction | Category 하나로 여러 거래 분류. 거래마다 Category는 0개 또는 1개 |
 
 Java에서는 객체를 참조하고, DB에서는 대상 객체의 PK를 FK 컬럼에 저장한다. 현재 관계 필드는 모두 ManyToOne이다. Transaction에 별도의 user_id는 없으며, 연결된 Account의 소유자로 사용자를 판단한다. Category.user는 거래 소유자가 아니라 카테고리 소유자이다.
 
-| 거래 유형 | fromAccount | toAccount | category | 전체 자산 영향 |
+| 거래 유형 | account | transferAccount | category | 전체 자산 영향 |
 |---|---|---|---|---|
-| INCOME | 없음 | 필수 | 수입 분류 연결 가능 | 증가 |
+| INCOME | 필수 | 없음 | 수입 분류 연결 가능 | 증가 |
 | EXPENSE | 필수 | 없음 | 지출 분류 연결 가능 | 감소 |
 | TRANSFER | 필수 | 필수 | 현재 설계에서는 비움 | 변화 없음 |
 
@@ -165,9 +166,9 @@ Java에서는 객체를 참조하고, DB에서는 대상 객체의 PK를 FK 컬�
 
 초기 잔액이 모두 0원인 생활비·저축·투자 묶음을 가정한다.
 
-| 거래 | type | amount | fromAccount | toAccount | category |
+| 거래 | type | amount | account | transferAccount | category |
 |---|---|---:|---|---|---|
-| 월급 수령 | INCOME | 3,000,000 | 없음 | 생활비 | 월급 |
+| 월급 수령 | INCOME | 3,000,000 | 생활비 | 없음 | 월급 |
 | 점심 결제 | EXPENSE | 9,000 | 생활비 | 없음 | 식비 |
 | 저축 배분 | TRANSFER | 1,000,000 | 생활비 | 저축 | 없음 |
 | 투자 배분 | TRANSFER | 500,000 | 생활비 | 투자 | 없음 |
@@ -188,7 +189,7 @@ Java에서는 객체를 참조하고, DB에서는 대상 객체의 PK를 FK 컬�
 ## 7. 남은 확인 사항
 
 - Account.createdAt: 자동 입력을 추가하거나 필드를 제거해야 한다. 마지막 코드에는 자동 입력 로직이 없다.
-- Transaction: fromAccount 오타, category 접근 메서드, setId 제거 적용 여부 확인.
+- Transaction: account·transferAccount로 변경 완료. 기존 DB 데이터 이전 및 실제 조회 검증 필요.
 - DB 연결 및 실제 테이블 생성·저장 검증.
 - Account·Category 삭제 시 기존 거래를 어떻게 보존할지 정책 결정. 삭제 전파는 현재 명시하지 않았다.
 - 과거 자산 추이: 초기 잔액이 어느 날짜 기준인지와 그 이전 거래 입력 규칙을 정해야 한다. 현재 별도 초기 잔액 기준일 필드는 없다.

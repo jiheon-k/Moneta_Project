@@ -13,20 +13,20 @@ public class TransactionUnit {
     private LocalDate transactionDate;
     private TransactionType type;
 
-    private Long fromAccountId;
-    private Long toAccountId;
+    private Long accountId;
+    private Long transferAccountId;
     private Long categoryId;
     
     public TransactionUnit(Long userId, Long id, Long amount, String memo, LocalDate transactionDate,
-            TransactionType type, Long fromAccountId, Long toAccountId, Long categoryId) {
+            TransactionType type, Long accountId, Long transferAccountId, Long categoryId) {
         this.userId=userId;
         this.id = id;
         this.amount = amount;
         this.memo = memo;
         this.transactionDate = transactionDate;
         this.type = type;
-        this.fromAccountId = fromAccountId;
-        this.toAccountId = toAccountId;
+        this.accountId = accountId;
+        this.transferAccountId = transferAccountId;
         this.categoryId = categoryId;
     }
 
@@ -54,12 +54,12 @@ public class TransactionUnit {
         return type;
     }
 
-    public Long getFromAccountId() {
-        return fromAccountId;
+    public Long getAccountId() {
+        return accountId;
     }
 
-    public Long getToAccountId() {
-        return toAccountId;
+    public Long getTransferAccountId() {
+        return transferAccountId;
     }
 
     public Long getCategoryId() {

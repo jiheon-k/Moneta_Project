@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.jiheon.moneta.transaction.TransactionUnit;
 import com.jiheon.moneta.account.dto.*;
 import com.jiheon.moneta.transaction.Transaction;
+import com.jiheon.moneta.transaction.Transaction.TransactionType;
 import com.jiheon.moneta.user.User;
 import com.jiheon.moneta.transaction.TransactionRepository;
 import com.jiheon.moneta.user.UserRepository;
@@ -95,23 +96,23 @@ public class AccountService {
         // =========== 거래 내역 조회 -> 기간을 정해서 조회 가능 ===========
         // default -> 최근 한달
         // 1. 계좌 모든 거래 내역
-        public AccountTransactionList getAllTransactionList(Long id, LocalDate start, LocalDate end) {
+        public AccountTransactionList getTransactions(Long id, LocalDate start, LocalDate end, TransactionType type) {
                 Account account = accountRepository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "해당 계좌가 존재하지 않습니다."));
 
-                List<Transaction> list = transactionRepository.periodTransactionList(id, start, end);
+                List<Transaction> list = transactionRepository.periodTypeTransactionList(id, start, end, type);
 
                 List<TransactionUnit> result = new ArrayList<>();
 
                 for (int i = 0; i < list.size(); i++) {
                         Transaction t = list.get(i);
-                        Long fromId = t.getFromAccount() == null ? null : t.getFromAccount().getId();
-                        Long toId = t.getToAccount() == null ? null : t.getToAccount().getId();
+                        Long accountId = t.getAccount().getId();
+                        Long transferAccountId = t.getTransferAccount() == null ? null : t.getTransferAccount().getId();
                         Long categoryId = t.getCategory() == null ? null : t.getCategory().getId();
 
                         TransactionUnit tu = new TransactionUnit(t.getUser().getId(), t.getId(), t.getAmount(),
-                                        t.getMemo(), t.getTransactionDate(), t.getType(), fromId, toId, categoryId);
+                                        t.getMemo(), t.getTransactionDate(), t.getType(), accountId, transferAccountId, categoryId);
                         result.add(tu);
                 }
                 return new AccountTransactionList(id, account.getName(), result);

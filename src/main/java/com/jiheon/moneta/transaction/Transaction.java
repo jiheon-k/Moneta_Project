@@ -42,17 +42,15 @@ public class Transaction {
     @Column(nullable = false)
     private TransactionType type;
 
-    // 해당 거래에서 사용된 AccountType
-    // JoinColum -> 참조할 칼럼 지정 X -> PK 참조
-    // 돈이 나가는 계좌
+    // 수입·지출을 기록할 계좌. 이체에서는 출금 계좌
     @ManyToOne
-    @JoinColumn(name = "from_account_id")
-    private Account fromAccount;
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
-    // 돈이 들어오는 계좌
+    // 이체받는 계좌. 수입·지출에서는 null
     @ManyToOne
-    @JoinColumn(name = "to_account_id")
-    private Account toAccount;
+    @JoinColumn(name = "transfer_account_id")
+    private Account transferAccount;
 
     // NULl 허용
     @ManyToOne
@@ -83,12 +81,12 @@ public class Transaction {
         return type;
     }
 
-    public Account getFromAccount() {
-        return fromAccount;
+    public Account getAccount() {
+        return account;
     }
 
-    public Account getToAccount() {
-        return toAccount;
+    public Account getTransferAccount() {
+        return transferAccount;
     }
 
     public Category getCategory() {
@@ -111,12 +109,12 @@ public class Transaction {
         this.type = type;
     }
 
-    public void setFromAccount(Account fromAccount) {
-        this.fromAccount = fromAccount;
+    public void setAccount(Account account) {
+        this.account = account;
     }
 
-    public void setToAccount(Account toAccount) {
-        this.toAccount = toAccount;
+    public void setTransferAccount(Account transferAccount) {
+        this.transferAccount = transferAccount;
     }
 
     public void setCategory(Category category) {

@@ -4,6 +4,7 @@ import com.jiheon.moneta.account.dto.AccountRequest;
 import com.jiheon.moneta.account.dto.AccountResponse;
 import com.jiheon.moneta.account.dto.AccountTransactionList;
 import com.jiheon.moneta.account.dto.AccountUpdateRequest;
+import com.jiheon.moneta.transaction.Transaction.TransactionType;
 
 import jakarta.validation.Valid;
 
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
 
-
 @RestController
 @RequestMapping("/accounts")
 public class AccountController {
@@ -33,42 +33,43 @@ public class AccountController {
     }
 
     // 계좌 1개 생성 = 완료
-    @PostMapping("/create")
+    @PostMapping()
     public Long createAccount(@Valid @RequestBody AccountRequest accountRequest) {
         // @Valid -> DTO 검증
         Long accountId = accountService.createNewAccount(accountRequest);
         return accountId;
     }
 
-    // 계좌 삭제 
+    // 계좌 삭제
     // 해당 계좌 관련 이체 내역 존재 -> 삭제 실패
     // 이후 논의
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public void deleteAccount(@PathVariable Long id) {
         accountService.deleteAccount(id);
     }
 
-    @PatchMapping("/change/{id}")
-    public void changeAccount(@PathVariable Long id, @Valid @RequestBody AccountUpdateRequest accountUpdate){
+    @PatchMapping("/{id}")
+    public void changeAccount(@PathVariable Long id, @Valid @RequestBody AccountUpdateRequest accountUpdate) {
         accountService.updateAccount(id, accountUpdate);
     }
 
     // 계좌 1개 간단 정보
-    @GetMapping("/view/{id}")
+    @GetMapping("{id}")
     public AccountResponse getAccountById(@PathVariable Long id) {
         return accountService.getAccount(id);
     }
 
     // 시작일 포함, 종료일 제외. 생략하면 내일을 종료일로 최근 한 달 조회
-    @GetMapping("/view/{id}/transactions/incoming")
+    @GetMapping("/{id}/transactions")
     public AccountTransactionList getAllTransaction(
             @PathVariable Long id,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @RequestParam(required = false) TransactionType type) {
         LocalDate endDate = (end == null) ? LocalDate.now().plusDays(1) : end;
         LocalDate startDate = (start == null) ? endDate.minusMonths(1) : start;
         validatePeriod(startDate, endDate);
-        return accountService.getAllTransactionList(id, startDate, endDate);
+        return accountService.getTransactions(id, startDate, endDate, type);
     }
 
     private void validatePeriod(LocalDate start, LocalDate end) {
