@@ -1,7 +1,8 @@
 package com.jiheon.moneta.account;
 
-import com.jiheon.moneta.user.User;
 import java.time.LocalDateTime;
+
+import com.jiheon.moneta.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

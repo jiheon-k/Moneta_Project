@@ -5,6 +5,11 @@ import com.jiheon.moneta.account.dto.AccountTransactionList;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.jiheon.moneta.auth.security.LoginUser;
+import org.junit.jupiter.api.AfterEach;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -26,7 +31,17 @@ class AccountControllerTests {
     @BeforeEach
     void setUp() {
         accountService = mock(AccountService.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new AccountController(accountService)).build();
+        LoginUser loginUser = mock(LoginUser.class);
+        when(loginUser.getId()).thenReturn(2L);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(loginUser, null, java.util.List.of()));
+        mockMvc = MockMvcBuilders.standaloneSetup(new AccountController(accountService))
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver()).build();
+    }
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -39,7 +54,7 @@ class AccountControllerTests {
                 start, TransactionType.EXPENSE, 1L, null, null);
         TransactionUnit transfer = new TransactionUnit(2L, 5L, 5000L, "저축",
                 start, TransactionType.TRANSFER, 1L, 6L, null);
-        when(accountService.getTransactions(1L, start, end, null))
+        when(accountService.getTransactions(1L, 2L, start, end, null))
                 .thenReturn(new AccountTransactionList(1L, "생활비", List.of(transaction, expense, transfer)));
 
         mockMvc.perform(get("/accounts/1/transactions")
@@ -57,7 +72,7 @@ class AccountControllerTests {
                 .andExpect(jsonPath("$.tList[2].type").value("TRANSFER"))
                 .andExpect(jsonPath("$.tList[2].accountId").value(1))
                 .andExpect(jsonPath("$.tList[2].transferAccountId").value(6));
-        verify(accountService).getTransactions(1L, start, end, null);
+        verify(accountService).getTransactions(1L, 2L, start, end, null);
     }
 
     @Test
@@ -68,21 +83,21 @@ class AccountControllerTests {
                         .param("start", "2026-10-01").param("end", "2026-11-01")
                         .param("type", "TRANSFER"))
                 .andExpect(status().isOk());
-        verify(accountService).getTransactions(1L, start, end, TransactionType.TRANSFER);
+        verify(accountService).getTransactions(1L, 2L, start, end, TransactionType.TRANSFER);
     }
 
     @Test
     void emptyTransactionListIsSerialized() throws Exception {
         LocalDate start = LocalDate.of(2026, 10, 1);
         LocalDate end = LocalDate.of(2026, 11, 1);
-        when(accountService.getTransactions(1L, start, end, null))
+        when(accountService.getTransactions(1L, 2L, start, end, null))
                 .thenReturn(new AccountTransactionList(1L, "생활비", List.of()));
 
         mockMvc.perform(get("/accounts/1/transactions")
                         .param("start", "2026-10-01").param("end", "2026-11-01"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tList").isEmpty());
-        verify(accountService).getTransactions(1L, start, end, null);
+        verify(accountService).getTransactions(1L, 2L, start, end, null);
     }
 
     @Test
@@ -90,7 +105,7 @@ class AccountControllerTests {
         LocalDate end = LocalDate.now().plusDays(1);
         mockMvc.perform(get("/accounts/1/transactions"))
                 .andExpect(status().isOk());
-        verify(accountService).getTransactions(1L, end.minusMonths(1), end, null);
+        verify(accountService).getTransactions(1L, 2L, end.minusMonths(1), end, null);
     }
 
     @Test
@@ -111,12 +126,12 @@ class AccountControllerTests {
     void missingAccountReturns404() throws Exception {
         LocalDate start = LocalDate.of(2026, 10, 1);
         LocalDate end = LocalDate.of(2026, 11, 1);
-        when(accountService.getTransactions(999L, start, end, null))
+        when(accountService.getTransactions(999L, 2L, start, end, null))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         mockMvc.perform(get("/accounts/999/transactions")
                         .param("start", "2026-10-01").param("end", "2026-11-01"))
                 .andExpect(status().isNotFound());
-        verify(accountService).getTransactions(999L, start, end, null);
+        verify(accountService).getTransactions(999L, 2L, start, end, null);
     }
 }

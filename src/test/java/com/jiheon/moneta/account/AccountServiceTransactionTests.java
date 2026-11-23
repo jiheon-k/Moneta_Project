@@ -30,13 +30,13 @@ class AccountServiceTransactionTests {
         Account account = mock(Account.class);
         when(account.getId()).thenReturn(1L);
         when(account.getName()).thenReturn("생활비");
-        when(accounts.findById(1L)).thenReturn(Optional.of(account));
+        when(accounts.findByIdAndUser_Id(1L, 2L)).thenReturn(Optional.of(account));
 
         User user = mock(User.class);
         when(user.getId()).thenReturn(2L);
         Transaction transaction = mock(Transaction.class);
         when(transaction.getAccount()).thenReturn(account);
-        when(transaction.getUser()).thenReturn(user);
+        when(account.getUser()).thenReturn(user);
         when(transaction.getType()).thenReturn(type);
         if (type == TransactionType.TRANSFER) {
             Account receivingAccount = mock(Account.class);
@@ -45,8 +45,9 @@ class AccountServiceTransactionTests {
         }
         when(transactions.periodTypeTransactionList(1L, start, end, type)).thenReturn(List.of(transaction));
 
-        var result = service.getTransactions(1L, start, end, type).getTList().getFirst();
+        var result = service.getTransactions(1L, 2L, start, end, type).getTList().getFirst();
 
+        assertEquals(2L, result.getUserId());
         assertEquals(1L, result.getAccountId());
         assertEquals(type == TransactionType.TRANSFER ? 6L : null, result.getTransferAccountId());
         assertNull(result.getCategoryId());
@@ -56,11 +57,11 @@ class AccountServiceTransactionTests {
 
     @Test
     void missingAccountReturns404BeforeQueryingTransactions() {
-        when(accounts.findById(999L)).thenReturn(Optional.empty());
+        when(accounts.findByIdAndUser_Id(999L, 2L)).thenReturn(Optional.empty());
         LocalDate start = LocalDate.of(2026, 10, 1);
 
         var error = assertThrows(ResponseStatusException.class,
-                () -> service.getTransactions(999L, start, start.plusMonths(1), null));
+                () -> service.getTransactions(999L, 2L, start, start.plusMonths(1), null));
 
         assertEquals(404, error.getStatusCode().value());
         verifyNoInteractions(transactions);

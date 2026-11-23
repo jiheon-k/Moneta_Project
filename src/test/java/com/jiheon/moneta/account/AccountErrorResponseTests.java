@@ -1,6 +1,11 @@
 package com.jiheon.moneta.account;
 
 import com.jiheon.moneta.common.GlobalExceptionHandler;
+import com.jiheon.moneta.auth.security.LoginUser;
+import org.junit.jupiter.api.AfterEach;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,13 +28,23 @@ class AccountErrorResponseTests {
     @BeforeEach
     void setUp() {
         accountService = mock(AccountService.class);
+        LoginUser loginUser = mock(LoginUser.class);
+        when(loginUser.getId()).thenReturn(2L);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(loginUser, null, java.util.List.of()));
         mockMvc = MockMvcBuilders.standaloneSetup(new AccountController(accountService))
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
+    }
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void missingAccountPreservesReason() throws Exception {
-        when(accountService.getAccount(999L)).thenThrow(
+        when(accountService.getAccount(999L, 2L)).thenThrow(
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 계좌가 존재하지 않습니다."));
 
         mockMvc.perform(get("/accounts/999"))
@@ -82,7 +97,7 @@ class AccountErrorResponseTests {
     @ParameterizedTest
     @EnumSource(value = HttpStatus.class, names = {"UNAUTHORIZED", "FORBIDDEN", "CONFLICT"})
     void explicitStatusesUseCommonFormat(HttpStatus httpStatus) throws Exception {
-        when(accountService.getAccount(1L)).thenThrow(new ResponseStatusException(httpStatus));
+        when(accountService.getAccount(1L, 2L)).thenThrow(new ResponseStatusException(httpStatus));
         mockMvc.perform(get("/accounts/1"))
                 .andExpect(status().is(httpStatus.value()))
                 .andExpect(jsonPath("$.code").value(httpStatus.name()))
@@ -91,7 +106,7 @@ class AccountErrorResponseTests {
 
     @Test
     void unexpectedErrorDoesNotExposeInternalMessage() throws Exception {
-        when(accountService.getAccount(1L)).thenThrow(new IllegalStateException("private database details"));
+        when(accountService.getAccount(1L, 2L)).thenThrow(new IllegalStateException("private database details"));
         mockMvc.perform(get("/accounts/1"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))

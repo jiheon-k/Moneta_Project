@@ -29,7 +29,11 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// demo 프로필에서 MySQL과 분리된 실험용 파일 DB를 사용한다.
+	runtimeOnly 'com.h2database:h2'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 }
 
 tasks.named('test') {

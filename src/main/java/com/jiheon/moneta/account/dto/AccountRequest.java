@@ -7,26 +7,15 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class AccountRequest {
-    @NotNull 
-    private Long userId;
-
-    @NotBlank 
+    @NotBlank
     @Size(max = 100)
     private String account_name;
 
     @NotNull
     private AccountType account_type;
 
-    @NotNull 
+    @NotNull
     private Long initialBalance;
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
 
     public String getAccount_name() {
         return account_name;

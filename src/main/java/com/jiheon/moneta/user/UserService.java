@@ -3,6 +3,7 @@ package com.jiheon.moneta.user;
 import org.springframework.stereotype.Service;
 
 
+// 연습용 사용자 생성을 처리한다. 실제 회원가입 API에서는 SignupService를 사용한다.
 @Service 
 public class UserService {
 

@@ -9,7 +9,12 @@ import org.springframework.data.repository.query.Param;
 
 import com.jiheon.moneta.transaction.Transaction.TransactionType;
 
+// 거래를 저장하고 계좌별 내역·합계·사용 여부를 DB에서 조회한다.
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+
+    boolean existsByAccount_IdOrTransferAccount_Id(Long accountId, Long transferAccountId);
+
+    boolean existsByCategory_Id(Long categoryId);
 
     // 계좌로 들어온 금액 합산
     // 수입 + 해당 계좌로 이체한 돈 

@@ -17,16 +17,17 @@ public class AccountResponse {
 
     private Long balance;
 
-    public AccountResponse(Long id, AccountType type, String name, LocalDateTime createdAt, Long initialBalance, Long balance) {
-        this.id=id;
+    public AccountResponse(Long id, AccountType type, String name, LocalDateTime createdAt,
+            Long initialBalance, Long balance) {
+        this.id = id;
         this.createdAt = createdAt;
         this.name = name;
         this.type = type;
-        this.initialBalance=initialBalance;
-        this.balance=balance;
+        this.initialBalance = initialBalance;
+        this.balance = balance;
     }
 
-    public Long getId(){
+    public Long getId() {
         return id;
     }
 
@@ -42,12 +43,11 @@ public class AccountResponse {
         return createdAt;
     }
 
-    public Long getInitialBalance(){
+    public Long getInitialBalance() {
         return initialBalance;
     }
 
-    public Long getBalance(){
+    public Long getBalance() {
         return balance;
     }
-
 }

@@ -1,6 +1,5 @@
 package com.jiheon.moneta.transaction;
 
-import com.jiheon.moneta.user.User;
 import com.jiheon.moneta.account.Account;
 import com.jiheon.moneta.category.Category;
 import java.time.LocalDate;
@@ -17,13 +16,26 @@ import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Transaction {
+    // 지출은 기준 계좌만 가지며, 이체 도착 계좌는 설정하지 않는다.
+    public static Transaction expense(Account account, Category category, Long amount,
+            LocalDate date, String memo) {
+        if (account == null || amount == null || amount <= 0 || amount > 1_000_000_000_000L
+                || date == null || date.isAfter(LocalDate.now()) || (memo != null && memo.length() > 255)) {
+            throw new IllegalArgumentException("지출 계좌, 금액, 날짜와 메모를 확인해 주세요.");
+        }
+        Transaction transaction = new Transaction();
+        transaction.account = account;
+        transaction.category = category;
+        transaction.amount = amount;
+        transaction.transactionDate = date;
+        transaction.memo = memo == null ? null : memo.trim();
+        transaction.type = TransactionType.EXPENSE;
+        return transaction;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne 
-    @JoinColumn(name="user_id", nullable=false)
-    private User user;
 
     @Column(nullable = false)
     private Long amount;
@@ -56,10 +68,6 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
-
-    public User getUser(){
-        return user;
-    }
 
     public Long getId() {
         return id;
