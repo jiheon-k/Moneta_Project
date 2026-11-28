@@ -30,6 +30,15 @@ public class TransactionUnit {
         this.categoryId = categoryId;
     }
 
+    public static TransactionUnit from(Transaction transaction) {
+        Long transferAccountId = transaction.getTransferAccount() == null
+                ? null : transaction.getTransferAccount().getId();
+        Long categoryId = transaction.getCategory() == null ? null : transaction.getCategory().getId();
+        return new TransactionUnit(transaction.getAccount().getUser().getId(), transaction.getId(),
+                transaction.getAmount(), transaction.getMemo(), transaction.getTransactionDate(),
+                transaction.getType(), transaction.getAccount().getId(), transferAccountId, categoryId);
+    }
+
     public Long getUserId() {
         return userId;
     }

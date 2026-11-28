@@ -7,7 +7,7 @@ import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-// 지출 등록 입력. 사용자와 거래 유형은 요청에서 받지 않고 서버에서 결정한다.
+// 지출 등록·전체 수정 입력. 사용자와 거래 유형은 서버에서 결정한다.
 public record TransactionRequest(
         @NotNull @Positive Long accountId,
         @NotNull @Positive @Max(1_000_000_000_000L) Long amount,

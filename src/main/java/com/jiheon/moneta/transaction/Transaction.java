@@ -19,18 +19,25 @@ public class Transaction {
     // 지출은 기준 계좌만 가지며, 이체 도착 계좌는 설정하지 않는다.
     public static Transaction expense(Account account, Category category, Long amount,
             LocalDate date, String memo) {
+        Transaction transaction = new Transaction();
+        transaction.type = TransactionType.EXPENSE;
+        transaction.updateExpense(account, category, amount, date, memo);
+        return transaction;
+    }
+
+    void updateExpense(Account account, Category category, Long amount, LocalDate date, String memo) {
+        if (type != TransactionType.EXPENSE) {
+            throw new IllegalStateException("지출 기록만 수정할 수 있습니다.");
+        }
         if (account == null || amount == null || amount <= 0 || amount > 1_000_000_000_000L
                 || date == null || date.isAfter(LocalDate.now()) || (memo != null && memo.length() > 255)) {
             throw new IllegalArgumentException("지출 계좌, 금액, 날짜와 메모를 확인해 주세요.");
         }
-        Transaction transaction = new Transaction();
-        transaction.account = account;
-        transaction.category = category;
-        transaction.amount = amount;
-        transaction.transactionDate = date;
-        transaction.memo = memo == null ? null : memo.trim();
-        transaction.type = TransactionType.EXPENSE;
-        return transaction;
+        this.account = account;
+        this.category = category;
+        this.amount = amount;
+        this.transactionDate = date;
+        this.memo = memo == null ? null : memo.trim();
     }
 
     @Id

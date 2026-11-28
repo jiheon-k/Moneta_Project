@@ -128,17 +128,7 @@ public class AccountService {
         List<TransactionUnit> transactionUnits = new ArrayList<>();
 
         for (int index = 0; index < transactions.size(); index++) {
-            Transaction transaction = transactions.get(index);
-            Long transactionAccountId = transaction.getAccount().getId();
-            Long transferAccountId = transaction.getTransferAccount() == null
-                    ? null : transaction.getTransferAccount().getId();
-            Long categoryId = transaction.getCategory() == null ? null : transaction.getCategory().getId();
-
-            TransactionUnit transactionUnit = new TransactionUnit(
-                    transaction.getAccount().getUser().getId(), transaction.getId(), transaction.getAmount(),
-                    transaction.getMemo(), transaction.getTransactionDate(), transaction.getType(),
-                    transactionAccountId, transferAccountId, categoryId);
-            transactionUnits.add(transactionUnit);
+            transactionUnits.add(TransactionUnit.from(transactions.get(index)));
         }
 
         return new AccountTransactionList(accountId, account.getName(), transactionUnits);

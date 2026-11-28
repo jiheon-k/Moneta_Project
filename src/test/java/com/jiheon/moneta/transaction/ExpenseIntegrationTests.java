@@ -48,6 +48,7 @@ class ExpenseIntegrationTests {
     private ResultActions write(Client client, String method, String path, Map<String, ?> body) throws Exception {
         var request = switch (method) {
             case "PATCH" -> patch(path);
+            case "PUT" -> put(path);
             case "DELETE" -> delete(path);
             default -> post(path);
         };
@@ -97,6 +98,70 @@ class ExpenseIntegrationTests {
                 .session(client.session())).andExpect(jsonPath("$.tList.length()").value(0));
         write(client, "POST", "/auth/logout", Map.of()).andExpect(status().isNoContent());
         mvc.perform(get("/accounts")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void expenseCanBeReadMovedAndDeletedWithBalancesUpdated() throws Exception {
+        Client owner = login();
+        long originalAccount = account(owner);
+        long destinationAccount = account(owner);
+        var input = expense(originalAccount);
+        Category category = new Category();
+        category.setName("수정 전 분류");
+        long categoryId = categories.save(category).getId();
+        input.put("categoryId", categoryId);
+        String id = write(owner, "POST", "/expenses", input).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String path = "/expenses/" + id;
+
+        mvc.perform(get(path).session(owner.session())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(originalAccount))
+                .andExpect(jsonPath("$.categoryId").value(categoryId))
+                .andExpect(jsonPath("$.memo").value("점심"));
+
+        write(owner, "PUT", path, Map.of("accountId", destinationAccount, "amount", 5000,
+                "transactionDate", "2026-01-16")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(Long.parseLong(id)))
+                .andExpect(jsonPath("$.accountId").value(destinationAccount))
+                .andExpect(jsonPath("$.amount").value(5000))
+                .andExpect(jsonPath("$.transactionDate").value("2026-01-16"))
+                .andExpect(jsonPath("$.memo").doesNotExist())
+                .andExpect(jsonPath("$.categoryId").doesNotExist());
+        expectBalance(owner, originalAccount, 10000);
+        expectBalance(owner, destinationAccount, 5000);
+        mvc.perform(get("/accounts/" + destinationAccount + "/transactions?start=2026-01-16&end=2026-01-17")
+                .session(owner.session())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.tList[0].id").value(Long.parseLong(id)));
+
+        write(owner, "DELETE", path, Map.of()).andExpect(status().isNoContent());
+        expectBalance(owner, destinationAccount, 10000);
+        mvc.perform(get(path).session(owner.session())).andExpect(status().isNotFound());
+        write(owner, "DELETE", path, Map.of()).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void expenseChangesRejectInvalidInputAndOtherUsers() throws Exception {
+        Client owner = login();
+        Client other = login();
+        long ownerAccount = account(owner);
+        long otherAccount = account(other);
+        String path = "/expenses/" + write(owner, "POST", "/expenses", expense(ownerAccount))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+
+        mvc.perform(get(path)).andExpect(status().isUnauthorized());
+        mvc.perform(get(path).session(other.session())).andExpect(status().isNotFound());
+        write(other, "PUT", path, expense(otherAccount)).andExpect(status().isNotFound());
+        write(other, "DELETE", path, Map.of()).andExpect(status().isNotFound());
+        write(owner, "PUT", path, expense(otherAccount)).andExpect(status().isNotFound());
+        write(owner, "PUT", path, Map.of("accountId", ownerAccount, "amount", 3000))
+                .andExpect(status().isBadRequest());
+        mvc.perform(delete(path).session(owner.session())).andExpect(status().isForbidden());
+        expectBalance(owner, ownerAccount, 7000);
+    }
+
+    private void expectBalance(Client client, long accountId, long balance) throws Exception {
+        mvc.perform(get("/accounts/" + accountId).session(client.session()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.balance").value(balance));
     }
 
     @Test

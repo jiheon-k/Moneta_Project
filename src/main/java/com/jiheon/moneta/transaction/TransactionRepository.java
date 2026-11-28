@@ -2,8 +2,11 @@ package com.jiheon.moneta.transaction;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +14,11 @@ import com.jiheon.moneta.transaction.Transaction.TransactionType;
 
 // 거래를 저장하고 계좌별 내역·합계·사용 여부를 DB에서 조회한다.
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+
+    Optional<Transaction> findByIdAndAccount_User_IdAndType(Long id, Long userId, TransactionType type);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Transaction> findForUpdateByIdAndAccount_User_IdAndType(Long id, Long userId, TransactionType type);
 
     boolean existsByAccount_IdOrTransferAccount_Id(Long accountId, Long transferAccountId);
 
